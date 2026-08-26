@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-	"cf-typegen": "wrangler types"
+	"cf-typegen": "wrangler types",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
