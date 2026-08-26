@@ -26,8 +26,8 @@ export const Route = createFileRoute("/")({
 
 const DEPARTMENTS = [
   { id: "search", label: "수색팀", Icon: Search },
-  { id: "guard", label: "경비팀", Icon: Shield },
-  { id: "supply", label: "보급팀", Icon: Wrench },
+  { id: "guard", label: "개발팀", Icon: Shield },
+  { id: "supply", label: "안전팀", Icon: Wrench },
 ] as const;
 
 function readImageFile(file: File): Promise<string> {
@@ -39,7 +39,9 @@ function readImageFile(file: File): Promise<string> {
 }
 
 function Index() {
-  const cardRef = useRef<HTMLDivElement>(null);
+  // captureRef는 "카드 뒤 배경 사각형 + 카드" 전체를 감싸는 바깥쪽 div를 가리킵니다.
+  // 다운로드할 때 이 영역 전체가 이미지로 캡처됩니다.
+  const captureRef = useRef<HTMLDivElement>(null);
   const [name, setName] = useState("이름적을수있게해주는곳");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
@@ -47,9 +49,11 @@ function Index() {
   const [accentColor, setAccentColor] = useState("#e6007e");
   const [cardColor, setCardColor] = useState("#ffffff");
   const [cardImage, setCardImage] = useState<string | null>(null);
-  const [bgColor, setBgColor] = useState("#8f8f8f");
-  const [bgImage, setBgImage] = useState<string | null>(null);
+  // rectColor / rectImage는 카드 "뒤"에 있는 사각형 배경만 제어합니다. (페이지 전체 X)
+  const [rectColor, setRectColor] = useState("#8f8f8f");
+  const [rectImage, setRectImage] = useState<string | null>(null);
   const [photoBg, setPhotoBg] = useState("#f6e77a");
+  const [downloading, setDownloading] = useState(false);
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const DeptIcon = current.Icon;
@@ -66,19 +70,35 @@ function Index() {
     setCardImage(await readImageFile(file));
   }
 
-  async function onBgImage(e: ChangeEvent<HTMLInputElement>) {
+  async function onRectImage(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setBgImage(await readImageFile(file));
+    setRectImage(await readImageFile(file));
   }
 
   async function download() {
-    if (!cardRef.current) return;
-    const url = await toPng(cardRef.current, { pixelRatio: 3, backgroundColor: cardColor });
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "transit-certificate.png";
-    a.click();
+    if (!captureRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      const url = await toPng(captureRef.current, {
+        pixelRatio: 3,
+        cacheBust: true,
+        skipFonts: true,
+      });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "transit-certificate.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("이미지 다운로드 실패:", err);
+      alert(
+        "이미지 다운로드에 실패했어요. 배경으로 넣은 이미지가 너무 크거나 형식이 특이할 수 있어요. 다시 시도해 주세요.",
+      );
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const cardStyle = cardImage
@@ -90,64 +110,60 @@ function Index() {
       }
     : { backgroundColor: cardColor, color: textColor };
 
-  const pageStyle = bgImage
+  const rectStyle = rectImage
     ? {
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(${rectImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }
-    : { backgroundColor: bgColor };
+    : { backgroundColor: rectColor };
 
   return (
-    <main className="min-h-screen px-4 py-8 transition-colors" style={pageStyle}>
+    <main className="min-h-screen bg-muted px-4 py-8">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <h1 className="sr-only">방주 통행 증명서 메이커</h1>
 
-        {/* Card */}
-        <div
-          ref={cardRef}
-          className="rounded-3xl p-6 shadow-2xl sm:p-10"
-          style={cardStyle}
-        >
-          <p className="text-center text-lg font-extrabold tracking-tight sm:text-3xl">
-            CERTIFICATE OF TRANSIT AUTHORIZATION
-          </p>
+        <div ref={captureRef} className="rounded-3xl p-6 transition-colors sm:p-10" style={rectStyle}>
+          <div className="rounded-3xl p-6 shadow-2xl sm:p-10" style={cardStyle}>
+            <p className="text-center text-lg font-extrabold tracking-tight sm:text-3xl">
+              CERTIFICATE OF TRANSIT AUTHORIZATION
+            </p>
 
-          <div className="mt-6 grid grid-cols-2 items-center gap-4 sm:gap-8">
-            <div className="text-right">
-              <p className="text-sm sm:text-xl">NAME</p>
-              <p
-                className="border-b-2 pb-1 text-base font-medium leading-tight sm:text-2xl"
-                style={{ borderColor: textColor }}
+            <div className="mt-6 grid grid-cols-2 items-center gap-4 sm:gap-8">
+              <div className="text-right">
+                <p className="text-sm sm:text-xl">NAME</p>
+                <p
+                  className="border-b-2 pb-1 text-base font-medium leading-tight sm:text-2xl"
+                  style={{ borderColor: textColor }}
+                >
+                  {name || "\u00A0"}
+                </p>
+
+                <p className="mt-6 text-sm sm:text-xl">DEPARTMENT</p>
+                <div className="flex items-center justify-end gap-2 font-extrabold" style={{ color: accentColor }}>
+                  <DeptIcon className="size-6 sm:size-9" strokeWidth={2.5} />
+                  <span className="text-lg sm:text-2xl">{current.label}</span>
+                </div>
+              </div>
+
+              <div
+                className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
+                style={{ backgroundColor: photoBg }}
               >
-                {name || "\u00A0"}
-              </p>
-
-              <p className="mt-6 text-sm sm:text-xl">DEPARTMENT</p>
-              <div className="flex items-center justify-end gap-2 font-extrabold" style={{ color: accentColor }}>
-                <DeptIcon className="size-6 sm:size-9" strokeWidth={2.5} />
-                <span className="text-lg sm:text-2xl">{current.label}</span>
+                {photo ? (
+                  <img src={photo} alt="통행증 사진" className="size-full object-cover" />
+                ) : (
+                  <ImagePlus className="size-10 opacity-40" />
+                )}
               </div>
             </div>
 
-            <div
-              className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
-              style={{ backgroundColor: photoBg }}
-            >
-              {photo ? (
-                <img src={photo} alt="통행증 사진" className="size-full object-cover" />
-              ) : (
-                <ImagePlus className="size-10 opacity-40" />
-              )}
-            </div>
+            <p className="mt-6 text-center text-sm font-bold sm:text-xl">
+              상기인의 방주 통행 및 신원을 보증함.
+            </p>
           </div>
-
-          <p className="mt-6 text-center text-sm font-bold sm:text-xl">
-            상기인의 방주 통행 및 신원을 보증함.
-          </p>
         </div>
 
-        {/* Tools */}
         <section className="rounded-2xl bg-card p-5 text-card-foreground shadow-lg">
           <h2 className="mb-4 text-base font-semibold">편집 도구</h2>
 
@@ -194,22 +210,23 @@ function Index() {
               onClearImage={() => setCardImage(null)}
             />
             <ImageOrColorField
-              label="페이지 배경"
-              color={bgColor}
-              onColorChange={setBgColor}
-              image={bgImage}
-              onImageChange={onBgImage}
-              onClearImage={() => setBgImage(null)}
+              label="카드 뒤 배경"
+              color={rectColor}
+              onColorChange={setRectColor}
+              image={rectImage}
+              onImageChange={onRectImage}
+              onClearImage={() => setRectImage(null)}
             />
             <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
           </div>
 
           <button
             onClick={download}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            disabled={downloading}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             <Download className="size-4" />
-            이미지 다운로드
+            {downloading ? "이미지 생성 중..." : "이미지 다운로드"}
           </button>
         </section>
       </div>
