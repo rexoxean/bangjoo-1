@@ -138,10 +138,10 @@ function Index() {
 
         <div
           ref={captureRef}
-          className="mx-auto flex aspect-square w-full items-center justify-center p-6 transition-colors sm:p-10"
+          className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
           style={rectStyle}
         >
-          <div className="w-full p-6 shadow-2xl sm:p-10" style={cardStyle}>
+          <div className="aspect-[16/9] w-[90%] p-4 shadow-2xl sm:p-8" style={cardStyle}>
             <p className="text-center text-lg font-extrabold tracking-tight sm:text-3xl">
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
