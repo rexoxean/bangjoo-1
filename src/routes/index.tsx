@@ -141,37 +141,37 @@ function Index() {
           className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
           style={rectStyle}
         >
-          <div className="aspect-[16/9] w-[90%] p-4 shadow-2xl sm:p-8" style={cardStyle}>
-            <p className="text-center text-lg font-extrabold tracking-tight sm:text-3xl">
+          <div className="aspect-[2/1] w-[85%] overflow-hidden p-4 shadow-2xl sm:p-8" style={cardStyle}>
+            <p className="text-center text-base font-extrabold tracking-tight sm:text-2xl">
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
-
-            <div className="mt-6 grid grid-cols-[1.3fr_1fr] items-center gap-4 sm:gap-8">
+            
+            <div className="mt-4 grid grid-cols-[1.3fr_1fr] items-center gap-3 sm:gap-6">
               <div className="text-right">
-                <p className="text-sm sm:text-xl">NAME</p>
+                <p className="text-xs sm:text-lg">NAME</p>
                 <p
-                  className="inline-block border-b-2 pb-1 text-base font-medium leading-tight sm:text-2xl"
+                  className="inline-block border-b-2 pb-1 text-sm font-medium leading-tight sm:text-xl"
                   style={{ borderColor: textColor }}
                 >
                   {name || "\u00A0"}
                 </p>
             
-                <p className="mt-6 text-sm sm:text-xl">DEPARTMENT</p>
+                <p className="mt-4 text-xs sm:text-lg">DEPARTMENT</p>
                 <div className="flex items-center justify-end gap-2 font-extrabold" style={{ color: accentColor }}>
-                  <DeptIcon className="size-6 sm:size-9" strokeWidth={2.5} />
-                  <span className="text-lg sm:text-2xl">{current.label}</span>
+                  <DeptIcon className="size-5 sm:size-7" strokeWidth={2.5} />
+                  <span className="text-base sm:text-xl">{current.label}</span>
                 </div>
               </div>
             
               <div
-                className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
+                className="flex aspect-square w-full items-center justify-center overflow-hidden"
                 style={{ backgroundColor: photoBg }}
               >
                 {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
               </div>
             </div>
-
-            <p className="mt-6 text-center text-sm font-bold sm:text-xl">
+            
+            <p className="mt-4 text-center text-xs font-bold sm:text-lg">
               상기인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
