@@ -24,10 +24,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// 부서별 CMYK 색상 지정 (안전팀=C, 수색팀=M, 개발팀=Y)
+// 부서별 CMYK 색상 (안전팀=C, 수색팀=M, 개발팀=Y)
 const DEPARTMENTS = [
-  { id: "safety", label: "안전팀", Icon: Shield, color: "#00AEEF" }, // Cyan
   { id: "search", label: "수색팀", Icon: Search, color: "#EC008C" }, // Magenta
+  { id: "safety", label: "안전팀", Icon: Shield, color: "#00AEEF" }, // Cyan
   { id: "dev", label: "개발팀", Icon: Code, color: "#FFF200" }, // Yellow
 ] as const;
 
@@ -41,7 +41,7 @@ function readImageFile(file: File): Promise<string> {
 
 function Index() {
   const captureRef = useRef<HTMLDivElement>(null);
-  const [name, setName] = useState("");
+  const [name, setName] = useState("이름적을수있게해주는곳");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
   const [textColor, setTextColor] = useState("#111111");
@@ -54,7 +54,7 @@ function Index() {
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const DeptIcon = current.Icon;
-  const accentColor = current.color; // 부서 선택에 따라 자동 결정
+  const accentColor = current.color;
 
   async function onPhoto(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -87,8 +87,6 @@ function Index() {
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], "transit-certificate.png", { type: "image/png" });
 
-      // 모바일(특히 iOS Safari)은 <a download>를 무시하는 경우가 많아서
-      // Web Share API가 되면 공유 시트(사진 앱 저장 포함)로 우선 처리
       const nav = navigator as Navigator & {
         canShare?: (data?: ShareData) => boolean;
         share?: (data: ShareData) => Promise<void>;
@@ -105,7 +103,6 @@ function Index() {
         a.remove();
       }
     } catch (err) {
-      // 공유 시트를 사용자가 취소한 경우는 에러로 취급하지 않음
       if (err instanceof DOMException && err.name === "AbortError") return;
       console.error("이미지 다운로드 실패:", err);
       alert("이미지 다운로드에 실패했어요. 다시 시도해 주세요.");
@@ -120,8 +117,9 @@ function Index() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: textColor,
+        containerType: "inline-size" as const,
       }
-    : { backgroundColor: cardColor, color: textColor };
+    : { backgroundColor: cardColor, color: textColor, containerType: "inline-size" as const };
 
   const rectStyle = rectImage
     ? {
@@ -136,33 +134,41 @@ function Index() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <h1 className="sr-only">방주 통행 증명서 메이커</h1>
 
+        {/* 정사각형 액자(뒤 배경) */}
         <div
           ref={captureRef}
           className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
           style={rectStyle}
         >
-          <div className="aspect-[2/1] w-[85%] overflow-hidden p-4 shadow-2xl sm:p-8" style={cardStyle}>
-            <p className="text-center text-base font-extrabold tracking-tight sm:text-2xl">
+          {/* 카드: 비율 고정(2.2:1) + overflow-hidden으로 액자 안에서 비율 유지, 폭은 액자의 85%만 사용해 좌우 여백 확보 */}
+          <div
+            className="aspect-[11/5] w-[85%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
+            style={cardStyle}
+          >
+            <p className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]">
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
-            
-            <div className="mt-4 grid grid-cols-[1.3fr_1fr] items-center gap-3 sm:gap-6">
+
+            <div className="mt-[2cqw] grid grid-cols-[1.3fr_1fr] items-center gap-[3cqw]">
               <div className="text-right">
-                <p className="text-xs sm:text-lg">NAME</p>
+                <p className="text-[clamp(7px,1.6cqw,13px)]">NAME</p>
                 <p
-                  className="inline-block border-b-2 pb-1 text-sm font-medium leading-tight sm:text-xl"
+                  className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(9px,2.4cqw,19px)]"
                   style={{ borderColor: textColor }}
                 >
                   {name || "\u00A0"}
                 </p>
-            
-                <p className="mt-4 text-xs sm:text-lg">DEPARTMENT</p>
-                <div className="flex items-center justify-end gap-2 font-extrabold" style={{ color: accentColor }}>
-                  <DeptIcon className="size-5 sm:size-7" strokeWidth={2.5} />
-                  <span className="text-base sm:text-xl">{current.label}</span>
+
+                <p className="mt-[2cqw] text-[clamp(7px,1.6cqw,13px)]">DEPARTMENT</p>
+                <div
+                  className="flex items-center justify-end gap-[1cqw] font-extrabold"
+                  style={{ color: accentColor }}
+                >
+                  <DeptIcon className="size-[clamp(12px,3cqw,26px)]" strokeWidth={2.5} />
+                  <span className="text-[clamp(10px,2.4cqw,19px)]">{current.label}</span>
                 </div>
               </div>
-            
+
               <div
                 className="flex aspect-square w-full items-center justify-center overflow-hidden"
                 style={{ backgroundColor: photoBg }}
@@ -170,13 +176,14 @@ function Index() {
                 {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
               </div>
             </div>
-            
-            <p className="mt-4 text-center text-xs font-bold sm:text-lg">
+
+            <p className="mt-[2cqw] text-center font-bold text-[clamp(8px,1.8cqw,14px)]">
               상기인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
         </div>
 
+        {/* Tools */}
         <section className="rounded-2xl bg-card p-5 text-card-foreground shadow-lg">
           <h2 className="mb-4 text-base font-semibold">편집 도구</h2>
 
