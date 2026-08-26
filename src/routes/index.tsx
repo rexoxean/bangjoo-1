@@ -41,7 +41,7 @@ function readImageFile(file: File): Promise<string> {
 
 function Index() {
   const captureRef = useRef<HTMLDivElement>(null);
-  const [name, setName] = useState("이름적을수있게해주는곳");
+  const [name, setName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
   const [textColor, setTextColor] = useState("#111111");
@@ -142,7 +142,7 @@ function Index() {
         >
           {/* 카드: 비율 고정(2.2:1) + overflow-hidden으로 액자 안에서 비율 유지, 폭은 액자의 85%만 사용해 좌우 여백 확보 */}
           <div
-            className="aspect-[11/5] w-[85%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
+            className="aspect-[2/1] w-[85%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
             style={cardStyle}
           >
             <p className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]">
@@ -170,7 +170,7 @@ function Index() {
               </div>
 
               <div
-                className="flex aspect-square w-full items-center justify-center overflow-hidden"
+                className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
                 style={{ backgroundColor: photoBg }}
               >
                 {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
