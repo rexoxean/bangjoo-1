@@ -142,14 +142,14 @@ function Index() {
         >
           {/* 카드: 비율 고정(2.2:1) + overflow-hidden으로 액자 안에서 비율 유지, 폭은 액자의 85%만 사용해 좌우 여백 확보 */}
           <div
-            className="aspect-[2/1] w-[85%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
+            className="aspect-[7/4] w-[90%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
             style={cardStyle}
           >
             <p className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]">
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
 
-            <div className="mt-[2cqw] grid grid-cols-[1.3fr_1fr] items-center gap-[3cqw]">
+            <div className="mt-[2cqw] grid grid-cols-[1.7fr_1fr] items-center gap-[3cqw]">
               <div className="text-right">
                 <p className="text-[clamp(7px,1.6cqw,13px)]">NAME</p>
                 <p
