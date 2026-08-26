@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
-import { Search, Shield, Wrench, Download, ImagePlus, X } from "lucide-react";
+import { Search, Shield, Code, Download, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,10 +24,11 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+// 부서별 CMYK 색상 지정 (안전팀=C, 수색팀=M, 개발팀=Y)
 const DEPARTMENTS = [
-  { id: "search", label: "수색팀", Icon: Search },
-  { id: "guard", label: "개발팀", Icon: Shield },
-  { id: "supply", label: "안전팀", Icon: Wrench },
+  { id: "safety", label: "안전팀", Icon: Shield, color: "#00AEEF" }, // Cyan
+  { id: "search", label: "수색팀", Icon: Search, color: "#EC008C" }, // Magenta
+  { id: "dev", label: "개발팀", Icon: Code, color: "#FFF200" }, // Yellow
 ] as const;
 
 function readImageFile(file: File): Promise<string> {
@@ -39,17 +40,13 @@ function readImageFile(file: File): Promise<string> {
 }
 
 function Index() {
-  // captureRef는 "카드 뒤 배경 사각형 + 카드" 전체를 감싸는 바깥쪽 div를 가리킵니다.
-  // 다운로드할 때 이 영역 전체가 이미지로 캡처됩니다.
   const captureRef = useRef<HTMLDivElement>(null);
-  const [name, setName] = useState("이름적을수있게해주는곳");
+  const [name, setName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
   const [textColor, setTextColor] = useState("#111111");
-  const [accentColor, setAccentColor] = useState("#e6007e");
   const [cardColor, setCardColor] = useState("#ffffff");
   const [cardImage, setCardImage] = useState<string | null>(null);
-  // rectColor / rectImage는 카드 "뒤"에 있는 사각형 배경만 제어합니다. (페이지 전체 X)
   const [rectColor, setRectColor] = useState("#8f8f8f");
   const [rectImage, setRectImage] = useState<string | null>(null);
   const [photoBg, setPhotoBg] = useState("#f6e77a");
@@ -57,6 +54,7 @@ function Index() {
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const DeptIcon = current.Icon;
+  const accentColor = current.color; // 부서 선택에 따라 자동 결정
 
   async function onPhoto(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -80,22 +78,37 @@ function Index() {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
     try {
-      const url = await toPng(captureRef.current, {
+      const dataUrl = await toPng(captureRef.current, {
         pixelRatio: 3,
         cacheBust: true,
         skipFonts: true,
       });
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "transit-certificate.png";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "transit-certificate.png", { type: "image/png" });
+
+      // 모바일(특히 iOS Safari)은 <a download>를 무시하는 경우가 많아서
+      // Web Share API가 되면 공유 시트(사진 앱 저장 포함)로 우선 처리
+      const nav = navigator as Navigator & {
+        canShare?: (data?: ShareData) => boolean;
+        share?: (data: ShareData) => Promise<void>;
+      };
+
+      if (nav.canShare && nav.share && nav.canShare({ files: [file] })) {
+        await nav.share({ files: [file], title: "방주 통행증" });
+      } else {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "transit-certificate.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
     } catch (err) {
+      // 공유 시트를 사용자가 취소한 경우는 에러로 취급하지 않음
+      if (err instanceof DOMException && err.name === "AbortError") return;
       console.error("이미지 다운로드 실패:", err);
-      alert(
-        "이미지 다운로드에 실패했어요. 배경으로 넣은 이미지가 너무 크거나 형식이 특이할 수 있어요. 다시 시도해 주세요.",
-      );
+      alert("이미지 다운로드에 실패했어요. 다시 시도해 주세요.");
     } finally {
       setDownloading(false);
     }
@@ -133,7 +146,7 @@ function Index() {
               <div className="text-right">
                 <p className="text-sm sm:text-xl">NAME</p>
                 <p
-                  className="border-b-2 pb-1 text-base font-medium leading-tight sm:text-2xl"
+                  className="inline-block border-b-2 pb-1 text-base font-medium leading-tight sm:text-2xl"
                   style={{ borderColor: textColor }}
                 >
                   {name || "\u00A0"}
@@ -150,11 +163,7 @@ function Index() {
                 className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
                 style={{ backgroundColor: photoBg }}
               >
-                {photo ? (
-                  <img src={photo} alt="통행증 사진" className="size-full object-cover" />
-                ) : (
-                  <ImagePlus className="size-10 opacity-40" />
-                )}
+                {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
               </div>
             </div>
 
@@ -175,8 +184,17 @@ function Index() {
             className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           />
 
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm font-medium hover:bg-accent">
+              <ImagePlus className="size-4" />
+              사진 넣기
+              <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
+            </label>
+            <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
+          </div>
+
           <div className="mt-4 grid grid-cols-3 gap-2">
-            {DEPARTMENTS.map(({ id, label, Icon }) => (
+            {DEPARTMENTS.map(({ id, label, Icon, color }) => (
               <button
                 key={id}
                 onClick={() => setDept(id)}
@@ -186,21 +204,14 @@ function Index() {
                     : "border-border bg-background hover:bg-accent"
                 }`}
               >
-                <Icon className="size-5" />
+                <Icon className="size-5" style={dept === id ? undefined : { color }} />
                 {label}
               </button>
             ))}
           </div>
 
-          <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm font-medium hover:bg-accent">
-            <ImagePlus className="size-4" />
-            사진 넣기
-            <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
-          </label>
-
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <ColorField label="글씨 색" value={textColor} onChange={setTextColor} />
-            <ColorField label="강조 색" value={accentColor} onChange={setAccentColor} />
             <ImageOrColorField
               label="카드 배경"
               color={cardColor}
@@ -217,7 +228,6 @@ function Index() {
               onImageChange={onRectImage}
               onClearImage={() => setRectImage(null)}
             />
-            <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
           </div>
 
           <button
