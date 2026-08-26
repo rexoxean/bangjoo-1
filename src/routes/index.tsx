@@ -151,22 +151,22 @@ function Index() {
 
             <div className="mt-[2cqw] grid grid-cols-[1.3fr_0.7fr] items-center gap-[3cqw]">
               <div className="text-right">
-                <p className="text-[clamp(7px,1.6cqw,13px)]">NAME</p>
-                <p
-                  className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(9px,2.4cqw,19px)]"
-                  style={{ borderColor: textColor }}
-                >
-                  {name || "\u00A0"}
-                </p>
-
-                <p className="mt-[2cqw] text-[clamp(7px,1.6cqw,13px)]">DEPARTMENT</p>
-                <div
-                  className="flex items-center justify-end gap-[1cqw] font-extrabold"
-                  style={{ color: accentColor }}
-                >
-                  <DeptIcon className="size-[clamp(12px,3cqw,26px)]" strokeWidth={2.5} />
-                  <span className="text-[clamp(10px,2.4cqw,19px)]">{current.label}</span>
-                </div>
+                <p className="text-[clamp(9px,2.1cqw,17px)]">NAME</p>
+                  <p
+                    className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(11px,3cqw,23px)]"
+                    style={{ borderColor: textColor }}
+                  >
+                    {name || "\u00A0"}
+                  </p>
+                  
+                  <p className="mt-[2cqw] text-[clamp(9px,2.1cqw,17px)]">DEPARTMENT</p>
+                  <div
+                    className="flex items-center justify-end gap-[1cqw] font-extrabold"
+                    style={{ color: accentColor }}
+                  >
+                    <DeptIcon className="size-[clamp(14px,3.6cqw,30px)]" strokeWidth={2.5} />
+                    <span className="text-[clamp(12px,3cqw,23px)]">{current.label}</span>
+                  </div>
               </div>
 
               <div
@@ -177,7 +177,7 @@ function Index() {
               </div>
             </div>
 
-            <p className="mt-[2cqw] text-center font-bold text-[clamp(8px,1.8cqw,14px)]">
+            <p className="mt-[2cqw] text-center font-bold text-[clamp(10px,2.3cqw,18px)]">
               상기인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
