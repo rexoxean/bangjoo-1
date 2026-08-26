@@ -49,7 +49,7 @@ function Index() {
   const [cardImage, setCardImage] = useState<string | null>(null);
   const [rectColor, setRectColor] = useState("#8f8f8f");
   const [rectImage, setRectImage] = useState<string | null>(null);
-  const [photoBg, setPhotoBg] = useState("#f6e77a");
+  const [photoBg, setPhotoBg] = useState("#4b5563");
   const [downloading, setDownloading] = useState(false);
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
@@ -133,16 +133,20 @@ function Index() {
 
   return (
     <main className="min-h-screen bg-muted px-4 py-8">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <h1 className="sr-only">방주 통행 증명서 메이커</h1>
 
-        <div ref={captureRef} className="rounded-3xl p-6 transition-colors sm:p-10" style={rectStyle}>
-          <div className="rounded-3xl p-6 shadow-2xl sm:p-10" style={cardStyle}>
+        <div
+          ref={captureRef}
+          className="mx-auto flex aspect-square w-full max-w-2xl items-center justify-center p-6 transition-colors sm:p-10"
+          style={rectStyle}
+        >
+          <div className="w-full rounded-xl p-6 shadow-2xl sm:p-10" style={cardStyle}>
             <p className="text-center text-lg font-extrabold tracking-tight sm:text-3xl">
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
 
-            <div className="mt-6 grid grid-cols-2 items-center gap-4 sm:gap-8">
+            <div className="mt-6 grid grid-cols-[1.3fr_1fr] items-center gap-4 sm:gap-8">
               <div className="text-right">
                 <p className="text-sm sm:text-xl">NAME</p>
                 <p
@@ -151,16 +155,16 @@ function Index() {
                 >
                   {name || "\u00A0"}
                 </p>
-
+            
                 <p className="mt-6 text-sm sm:text-xl">DEPARTMENT</p>
                 <div className="flex items-center justify-end gap-2 font-extrabold" style={{ color: accentColor }}>
                   <DeptIcon className="size-6 sm:size-9" strokeWidth={2.5} />
                   <span className="text-lg sm:text-2xl">{current.label}</span>
                 </div>
               </div>
-
+            
               <div
-                className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
+                className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
                 style={{ backgroundColor: photoBg }}
               >
                 {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
