@@ -205,8 +205,8 @@ function Index() {
               </p>
 
               <div className="mt-6 flex items-center justify-between gap-6">
-                {/* 텍스트 영역 (가로 58%) */}
-                <div className="flex w-[58%] flex-col items-end text-right">
+                {/* 텍스트 영역 */}
+                <div className="flex flex-1 flex-col items-end text-right">
                   {/* NAME 라벨: scaleY(0.85) */}
                   <p
                     className="origin-right text-[16px] font-semibold leading-none"
@@ -252,9 +252,9 @@ function Index() {
                   </div>
                 </div>
 
-                {/* 사진 영역 (가로 38% - 필요시 40%, 42% 등으로 자유롭게 변경 가능) */}
+                {/* 사진 영역 (세로 h-[180px] 고정, 가로 w-[240px]로 확장) */}
                 <div
-                  className="flex w-[45%] items-center justify-center overflow-hidden"
+                  className="flex h-[180px] w-[240px] shrink-0 items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
