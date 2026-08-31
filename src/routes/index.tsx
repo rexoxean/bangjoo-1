@@ -95,8 +95,6 @@ function Index() {
   async function download() {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
-    // 팝업 차단을 피하려면 클릭 직후(비동기 작업 전에) 창을 먼저 열어야 함
-    const win = window.open("", "_blank");
     try {
       const dataUrl = await toPng(captureRef.current, {
         pixelRatio: 3,
@@ -104,25 +102,18 @@ function Index() {
         skipFonts: false,
       });
 
-      // 브라우저는 새 창을 data: URL로 직접 이동시키는 걸 차단하는 경우가 많음(피싱 방지 정책).
-      // blob: URL로 변환해서 이동하면 이 제한에 걸리지 않음 — about:blank로 남던 문제의 실제 원인.
       const blob = await (await fetch(dataUrl)).blob();
       const blobUrl = URL.createObjectURL(blob);
 
-      if (win) {
-        win.location.href = blobUrl;
-      } else {
-        // 팝업이 차단된 경우 기존 방식(자동 다운로드)으로 대체
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = "transit-certificate.png";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "transit-certificate.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
     } catch (err) {
       console.error("이미지 생성 실패:", err);
-      win?.close();
       alert("이미지 생성에 실패했어요. 다시 시도해 주세요.");
     } finally {
       setDownloading(false);
