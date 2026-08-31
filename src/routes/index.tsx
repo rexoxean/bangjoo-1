@@ -121,15 +121,16 @@ function Index() {
     card.style.boxShadow = "none"; // 사파리에서 그림자가 깨지는 문제 방지: 캡처 중엔 잠깐 제거
 
     try {
-      // 1. 따옴표를 포함한 정석 문법으로 폰트 로드
+      // 특정 굵기(weight)의 폰트 렌더링에 필요한 자원을 확실히 가져오도록 텍스트 파라미터를 추가합니다.
       await Promise.all([
-        document.fonts.load("400 16px 'Pretendard'"),
-        document.fonts.load("500 16px 'Pretendard'"),
-        document.fonts.load("700 16px 'Pretendard'"),
-        document.fonts.load("800 16px 'Pretendard'"),
+        document.fonts.load("400 16px 'Pretendard'", "글"),
+        document.fonts.load("500 16px 'Pretendard'", "글"),
+        document.fonts.load("700 16px 'Pretendard'", "글"),
+        document.fonts.load("800 16px 'Pretendard'", "글"),
       ]);
+
       await document.fonts.ready;
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const dataUrl = await toPng(el, {
         width: FRAME_SIZE,
