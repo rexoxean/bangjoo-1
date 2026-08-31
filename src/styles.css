@@ -3,7 +3,7 @@
 @source "../src";
 @import "tw-animate-css";
 
-/* @import "pretendard/dist/web/static/pretendard.css"; */
+@import "pretendard/dist/web/static/pretendard.css";
 
 @custom-variant dark (&:is(.dark *));
 

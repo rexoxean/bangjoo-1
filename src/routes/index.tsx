@@ -2,9 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
 import { Search, Shield, Code, Download, ImagePlus, X, Moon, Sun } from "lucide-react";
-// main.tsx 또는 App.tsx 상단
-import "pretendard/dist/web/static/pretendard.css"; // <- 이 줄 추가
-import "./style.css";
 
 export const Route = createFileRoute("/")({
   head: () => ({
