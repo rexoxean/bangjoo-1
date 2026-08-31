@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
-import { Search, Shield, Code, Download, ImagePlus, X } from "lucide-react";
+import { Search, Shield, Code, Download, ImagePlus, X, Moon, Sun } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -68,6 +68,9 @@ function Index() {
   const [photoBg, setPhotoBg] = useState("#4b5563");
   const [downloading, setDownloading] = useState(false);
 
+  // 사이트 전체(편집 도구 화면) 다크/아포칼립스 테마 — 카드 자체 색상과는 별개
+  const [dark, setDark] = useState(false);
+
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const accentColor = current.color;
 
@@ -101,13 +104,17 @@ function Index() {
         skipFonts: false,
       });
 
+      // 브라우저는 새 창을 data: URL로 직접 이동시키는 걸 차단하는 경우가 많음(피싱 방지 정책).
+      // blob: URL로 변환해서 이동하면 이 제한에 걸리지 않음 — about:blank로 남던 문제의 실제 원인.
+      const blob = await (await fetch(dataUrl)).blob();
+      const blobUrl = URL.createObjectURL(blob);
+
       if (win) {
-        // document.write 대신 새 창을 이미지 URL로 바로 이동 — 훨씬 안정적
-        win.location.href = dataUrl;
+        win.location.href = blobUrl;
       } else {
         // 팝업이 차단된 경우 기존 방식(자동 다운로드)으로 대체
         const a = document.createElement("a");
-        a.href = dataUrl;
+        a.href = blobUrl;
         a.download = "transit-certificate.png";
         document.body.appendChild(a);
         a.click();
@@ -148,7 +155,7 @@ function Index() {
 
   return (
     <main
-      className="min-h-screen bg-muted px-4 py-8"
+      className={dark ? "min-h-screen bg-[#0b0b0c] px-4 py-8" : "min-h-screen bg-muted px-4 py-8"}
       style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -211,40 +218,48 @@ function Index() {
               className="text-center font-bold text-[clamp(10px,2.3cqw,18px)]"
               style={{ color: titleColor, marginTop: SPACING }}
             >
-              상기 인의 방주 통행 및 신원을 보증함.
+              상기인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
         </div>
 
         {/* Tools */}
-        <section className="rounded-2xl bg-card p-5 text-card-foreground shadow-lg">
-          <h2 className="mb-4 text-base font-semibold">통행증 편집</h2>
+        <section
+          className={
+            dark
+              ? "rounded-2xl border border-[#3a1f14] bg-[#17140f] p-5 text-[#e8dfce] shadow-lg"
+              : "rounded-2xl bg-card p-5 text-card-foreground shadow-lg"
+          }
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold">통행증 편집</h2>
+            <button
+              type="button"
+              onClick={() => setDark((v) => !v)}
+              className={
+                dark
+                  ? "flex items-center gap-1.5 rounded-lg border border-[#5a3220] bg-[#241c14] px-3 py-1.5 text-xs font-medium text-[#e8dfce] hover:bg-[#2c2116]"
+                  : "flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent"
+              }
+            >
+              {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+              {dark ? "라이트 모드" : "다크 모드"}
+            </button>
+          </div>
 
           <label className="block text-sm font-medium">NAME</label>
-          <div className="mt-1 flex items-center gap-2">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="이름을 입력하세요"
-              className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
-            <input
-              type="color"
-              value={nameColor}
-              onChange={(e) => setNameColor(e.target.value)}
-              className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-border bg-background"
-              aria-label="이름"
-            />
-          </div>
+          <NameFieldWithHex
+            value={name}
+            onChange={setName}
+            color={nameColor}
+            onColorChange={setNameColor}
+          />
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm font-medium hover:bg-accent">
-              <ImagePlus className="size-4" />
-              사진 넣기
-              <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
-            </label>
-            {/* <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} /> */}
-          </div>
+          <label className="mt-4 flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 text-sm font-medium hover:bg-accent">
+            <ImagePlus className="size-4" />
+            사진 넣기
+            <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
+          </label>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
             {DEPARTMENTS.map(({ id, label, Icon, color }) => (
@@ -301,26 +316,60 @@ function Index() {
   );
 }
 
-/** 색상 피커만 (헥사코드 입력 없음) */
-function ColorField({
-  label,
+/** 이름 텍스트 입력 + 색상 피커 + 헥스코드 입력 */
+function NameFieldWithHex({
   value,
   onChange,
+  color,
+  onColorChange,
 }: {
-  label: string;
   value: string;
   onChange: (v: string) => void;
+  color: string;
+  onColorChange: (v: string) => void;
 }) {
+  const [hexText, setHexText] = useState(color);
+
+  useEffect(() => {
+    setHexText(color);
+  }, [color]);
+
+  function commit(raw: string) {
+    const normalized = normalizeHex(raw);
+    if (normalized) {
+      onColorChange(normalized);
+    } else {
+      setHexText(color);
+    }
+  }
+
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium">
-      {label}
+    <div className="mt-1 flex flex-wrap items-center gap-2">
       <input
-        type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full cursor-pointer rounded-lg border border-border bg-background"
+        placeholder="이름을 입력하세요"
+        className="h-10 min-w-[140px] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
       />
-    </label>
+      <input
+        type="color"
+        value={color}
+        onChange={(e) => onColorChange(e.target.value)}
+        className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-border bg-background"
+        aria-label="이름 글자 색"
+      />
+      <input
+        type="text"
+        value={hexText}
+        onChange={(e) => setHexText(e.target.value)}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
+        placeholder="#000000"
+        className="h-10 w-24 shrink-0 rounded-lg border border-input bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+      />
+    </div>
   );
 }
 
