@@ -218,7 +218,7 @@ function Index() {
                   {/* 이름 텍스트: scaleY(0.88) 및 언더바 바짝 밀착 */}
                   <div className="mt-1.5 flex justify-end">
                     <span
-                      className="inline-block border-b-2 pb-[1px] text-[22px] font-medium leading-none"
+                      className="inline-block border-b-2 pb-[1px] text-[22px] font-extrabold leading-none"
                       style={{
                         borderColor: nameColor,
                         color: nameColor,
