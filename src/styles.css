@@ -2,8 +2,13 @@
 @source "../src";
 @import "tw-animate-css";
 
-/* Pretendard 폰트 패키지 불러오기 */
-@import "pretendard/dist/web/static/pretendard.css";
+/* 기존 import 제거 */
+/* @import "pretendard/dist/web/static/pretendard.css"; */
+
+/* 아래 CDN 경로로 변경 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
+@import "tailwindcss";
 
 @theme {
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
