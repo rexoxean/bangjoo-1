@@ -57,7 +57,6 @@ function Index() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
 
-  // 글자 색: 제목/하단 문구, 라벨(NAME/DEPARTMENT), 이름 값 — 3그룹으로 분리
   const [titleColor, setTitleColor] = useState("#111111");
   const [labelColor, setLabelColor] = useState("#6b7280");
   const [nameColor, setNameColor] = useState("#111111");
@@ -103,10 +102,8 @@ function Index() {
       });
 
       if (win) {
-        win.document.write(
-          `<title>방주 통행증</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" style="max-width:100%;height:auto;" alt="방주 통행증" /></body>`,
-        );
-        win.document.close();
+        // document.write 대신 새 창을 이미지 URL로 바로 이동 — 훨씬 안정적
+        win.location.href = dataUrl;
       } else {
         // 팝업이 차단된 경우 기존 방식(자동 다운로드)으로 대체
         const a = document.createElement("a");
@@ -147,7 +144,6 @@ function Index() {
       }
     : { backgroundColor: rectColor };
 
-  // 카드 안쪽 여백과 세로 간격을 동일한 값으로 통일 (테두리~제목, 제목~내용, 내용~사진 간격 일치)
   const SPACING = "clamp(10px,4cqw,32px)";
 
   return (
@@ -158,7 +154,6 @@ function Index() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <h1 className="sr-only">방주 통행 증명서 메이커</h1>
 
-        {/* 정사각형 액자(뒤 배경) */}
         <div
           ref={captureRef}
           className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
@@ -216,22 +211,31 @@ function Index() {
               className="text-center font-bold text-[clamp(10px,2.3cqw,18px)]"
               style={{ color: titleColor, marginTop: SPACING }}
             >
-              상기인의 방주 통행 및 신원을 보증함.
+              상기 인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
         </div>
 
         {/* Tools */}
         <section className="rounded-2xl bg-card p-5 text-card-foreground shadow-lg">
-          <h2 className="mb-4 text-base font-semibold">편집 도구</h2>
+          <h2 className="mb-4 text-base font-semibold">통행증 편집</h2>
 
           <label className="block text-sm font-medium">NAME</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="이름을 입력하세요"
-            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름을 입력하세요"
+              className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            />
+            <input
+              type="color"
+              value={nameColor}
+              onChange={(e) => setNameColor(e.target.value)}
+              className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-border bg-background"
+              aria-label="이름"
+            />
+          </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border px-3 py-3 text-sm font-medium hover:bg-accent">
@@ -239,7 +243,7 @@ function Index() {
               사진 넣기
               <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
             </label>
-            <HexColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
+            {/* <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} /> */}
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -259,19 +263,14 @@ function Index() {
             ))}
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <HexColorField label="제목·하단 문구 색" value={titleColor} onChange={setTitleColor} />
-            <HexColorField
-              label="라벨 색 (NAME/DEPT)"
-              value={labelColor}
-              onChange={setLabelColor}
-            />
-            <HexColorField label="이름 글자 색" value={nameColor} onChange={setNameColor} />
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <HexColorField label="제목·하단 문구" value={titleColor} onChange={setTitleColor} />
+            <HexColorField label="라벨 (NAME/DEPT)" value={labelColor} onChange={setLabelColor} />
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <ImageOrColorField
-              label="카드 배경"
+              label="카드"
               color={cardColor}
               onColorChange={setCardColor}
               image={cardImage}
@@ -279,7 +278,7 @@ function Index() {
               onClearImage={() => setCardImage(null)}
             />
             <ImageOrColorField
-              label="카드 뒤 배경"
+              label="배경"
               color={rectColor}
               onColorChange={setRectColor}
               image={rectImage}
@@ -294,7 +293,7 @@ function Index() {
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             <Download className="size-4" />
-            {downloading ? "이미지 생성 중..." : "이미지 다운로드"}
+            {downloading ? "통행증을 발급 중입니다..." : "통행증 발급하기"}
           </button>
         </section>
       </div>
@@ -302,7 +301,30 @@ function Index() {
   );
 }
 
-/** 색상 피커 + 헥스코드 입력 (OS/브라우저 상관없이 정확한 색상 지정 가능) */
+/** 색상 피커만 (헥사코드 입력 없음) */
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-xs font-medium">
+      {label}
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-full cursor-pointer rounded-lg border border-border bg-background"
+      />
+    </label>
+  );
+}
+
+/** 색상 피커 + 헥스코드 입력 */
 function HexColorField({
   label,
   value,
