@@ -258,7 +258,7 @@ function Index() {
         >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">통행증 편집</h2>
-            <button
+            {/* <button
               type="button"
               onClick={() => setDark((v) => !v)}
               className={
@@ -269,10 +269,10 @@ function Index() {
             >
               {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
               {dark ? "라이트 모드" : "다크 모드"}
-            </button>
+            </button> */}
           </div>
 
-          <label className="block text-sm font-medium">NAME</label>
+          <label className="block text-sm font-medium">이름</label>
           <NameFieldWithHex
             value={name}
             onChange={setName}
