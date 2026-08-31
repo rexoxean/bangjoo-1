@@ -56,6 +56,7 @@ function readImageFile(file: File): Promise<string> {
 function Index() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
   const [name, setName] = useState("");
@@ -107,8 +108,6 @@ function Index() {
     setRectImage(await readImageFile(file));
   }
 
-  const cardRef = useRef<HTMLDivElement>(null); // 카드 자체를 가리키는 ref 추가
-
   async function download() {
     const el = captureRef.current;
     const card = cardRef.current;
@@ -118,18 +117,21 @@ function Index() {
     const prevTransform = el.style.transform;
     const prevShadow = card.style.boxShadow;
     el.style.transform = "none";
-    card.style.boxShadow = "none"; // 사파리에서 그림자가 깨지는 문제 방지: 캡처 중엔 잠깐 제거
+    card.style.boxShadow = "none"; // Safari 등에서 box-shadow 레이어 캡처 불량 방지
 
     try {
-      // 특정 굵기(weight)의 폰트 렌더링에 필요한 자원을 확실히 가져오도록 텍스트 파라미터를 추가합니다.
-      await Promise.all([
-        document.fonts.load("400 16px 'Pretendard'", "글"),
-        document.fonts.load("500 16px 'Pretendard'", "글"),
-        document.fonts.load("700 16px 'Pretendard'", "글"),
-        document.fonts.load("800 16px 'Pretendard'", "글"),
-      ]);
+      // Pretendard 폰트 페이스 준비 완료 보장
+      if ("fonts" in document) {
+        await Promise.all([
+          document.fonts.load("400 16px Pretendard", "글"),
+          document.fonts.load("500 16px Pretendard", "글"),
+          document.fonts.load("700 16px Pretendard", "글"),
+          document.fonts.load("800 16px Pretendard", "글"),
+        ]);
+        await document.fonts.ready;
+      }
 
-      await document.fonts.ready;
+      // DOM 프레임 완전히 그려질 때까지 2프레임 대기
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const dataUrl = await toPng(el, {
@@ -137,8 +139,7 @@ function Index() {
         height: FRAME_SIZE,
         pixelRatio: 3,
         cacheBust: true,
-        // 2. 외부 CDN WOFF2 파일 재요청 시 발생하는 CORS/네트워크 에러 방지
-        fontEmbedCSS: "",
+        fontEmbedCSS: "", // 외부 CDN 재요청으로 인한 CORS 에러 방지
       });
 
       const blob = await (await fetch(dataUrl)).blob();
@@ -243,7 +244,7 @@ function Index() {
               </div>
 
               <p className="mt-6 text-center text-[16px] font-bold" style={{ color: titleColor }}>
-                상기인의 방주 통행 및 신원을 보증함.
+                상기 인의 방주 통행 및 신원을 보증함.
               </p>
             </div>
           </div>
@@ -259,18 +260,6 @@ function Index() {
         >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold">통행증 편집</h2>
-            {/* <button
-              type="button"
-              onClick={() => setDark((v) => !v)}
-              className={
-                dark
-                  ? "flex items-center gap-1.5 rounded-lg border border-[#5a3220] bg-[#241c14] px-3 py-1.5 text-xs font-medium text-[#e8dfce] hover:bg-[#2c2116]"
-                  : "flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent"
-              }
-            >
-              {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-              {dark ? "라이트 모드" : "다크 모드"}
-            </button> */}
           </div>
 
           <label className="block text-sm font-medium">이름</label>
@@ -291,6 +280,7 @@ function Index() {
             {DEPARTMENTS.map(({ id, label, Icon, color }) => (
               <button
                 key={id}
+                type="button"
                 onClick={() => setDept(id)}
                 className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-3 text-xs font-medium transition-colors ${
                   dept === id
@@ -329,6 +319,7 @@ function Index() {
           </div>
 
           <button
+            type="button"
             onClick={download}
             disabled={downloading}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
