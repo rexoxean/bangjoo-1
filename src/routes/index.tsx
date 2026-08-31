@@ -186,34 +186,34 @@ function Index() {
             }}
             className="flex items-center justify-center p-10 transition-colors"
           >
-            <div className="w-[90%] rounded-lg p-8 shadow-2xl" style={cardStyle}>
+            <div className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
               <p
-                className="text-center text-[22px] font-extrabold tracking-tight"
+                className="text-center text-[20px] font-extrabold tracking-tight"
                 style={{ color: titleColor }}
               >
                 CERTIFICATE OF TRANSIT AUTHORIZATION
               </p>
 
-              <div className="mt-8 grid grid-cols-[1.3fr_0.7fr] items-center gap-8">
+              <div className="mt-6 grid grid-cols-[1.3fr_0.7fr] items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[17px]" style={{ color: labelColor }}>
+                  <p className="text-[16px]" style={{ color: labelColor }}>
                     NAME
                   </p>
                   <p
-                    className="inline-block border-b-2 pb-1 text-[23px] font-medium leading-tight"
+                    className="inline-block border-b-2 pb-1 text-[21px] font-medium leading-tight"
                     style={{ borderColor: nameColor, color: nameColor }}
                   >
                     {name || "\u00A0"}
                   </p>
 
-                  <p className="mt-8 text-[17px]" style={{ color: labelColor }}>
+                  <p className="mt-6 text-[16px]" style={{ color: labelColor }}>
                     DEPARTMENT
                   </p>
                   <div
                     className="flex items-center justify-end font-extrabold"
                     style={{ color: accentColor }}
                   >
-                    <span className="text-[23px]">{current.label}</span>
+                    <span className="text-[21px]">{current.label}</span>
                   </div>
                 </div>
 
@@ -227,8 +227,8 @@ function Index() {
                 </div>
               </div>
 
-              <p className="mt-8 text-center text-[18px] font-bold" style={{ color: titleColor }}>
-                상기 인의 방주 통행 및 신원을 보증함.
+              <p className="mt-6 text-center text-[16px] font-bold" style={{ color: titleColor }}>
+                상기인의 방주 통행 및 신원을 보증함.
               </p>
             </div>
           </div>
