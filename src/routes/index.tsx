@@ -198,7 +198,7 @@ function Index() {
             <div ref={cardRef} className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
               {/* 상단 제목: scaleY(0.88)로 세로 비율 축소 */}
               <p
-                className="origin-center text-center text-[20px] font-extrabold tracking-tight"
+                className="origin-center text-center text-[22px] font-extrabold tracking-tight"
                 style={{ color: titleColor, transform: "scaleY(0.88)" }}
               >
                 CERTIFICATE OF TRANSIT AUTHORIZATION
@@ -208,7 +208,7 @@ function Index() {
                 <div className="flex flex-col items-end text-right">
                   {/* NAME 라벨: scaleY(0.85) */}
                   <p
-                    className="origin-right text-[15px] font-semibold leading-none"
+                    className="origin-right text-[16px] font-semibold leading-none"
                     style={{ color: labelColor, transform: "scaleY(0.85)" }}
                   >
                     NAME
@@ -217,7 +217,7 @@ function Index() {
                   {/* 이름 텍스트: scaleY(0.88) 및 언더바 바짝 밀착 */}
                   <div className="mt-1.5 flex justify-end">
                     <span
-                      className="inline-block border-b-2 pb-[1px] text-[21px] font-medium leading-none"
+                      className="inline-block border-b-2 pb-[1px] text-[22px] font-medium leading-none"
                       style={{
                         borderColor: nameColor,
                         color: nameColor,
@@ -231,7 +231,7 @@ function Index() {
 
                   {/* DEPARTMENT 라벨: scaleY(0.85) */}
                   <p
-                    className="mt-5 origin-right text-[15px] font-semibold leading-none"
+                    className="mt-5 origin-right text-[16px] font-semibold leading-none"
                     style={{ color: labelColor, transform: "scaleY(0.85)" }}
                   >
                     DEPARTMENT
@@ -243,7 +243,7 @@ function Index() {
                     style={{ color: accentColor }}
                   >
                     <span
-                      className="inline-block origin-right text-[21px]"
+                      className="inline-block origin-right text-[22px]"
                       style={{ transform: "scaleY(0.88)" }}
                     >
                       {current.label}
@@ -252,7 +252,7 @@ function Index() {
                 </div>
 
                 <div
-                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md"
+                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
@@ -263,7 +263,7 @@ function Index() {
 
               {/* 하단 문구: scaleY(0.9) */}
               <p
-                className="mt-6 origin-center text-center text-[15px] font-bold"
+                className="mt-6 origin-center text-center text-[18px] font-bold"
                 style={{ color: titleColor, transform: "scaleY(0.9)" }}
               >
                 상기 인의 방주 통행 및 신원을 보증함.
