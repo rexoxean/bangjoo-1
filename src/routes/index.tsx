@@ -107,16 +107,22 @@ function Index() {
     setRectImage(await readImageFile(file));
   }
 
+  const cardRef = useRef<HTMLDivElement>(null); // 카드 자체를 가리키는 ref 추가
+
   async function download() {
     const el = captureRef.current;
-    if (!el || downloading) return;
+    const card = cardRef.current;
+    if (!el || !card || downloading) return;
     setDownloading(true);
 
-    // 캡처 순간에는 화면 크기와 무관하게 축소(scale) 없이 원본 640px 그대로 캡처
     const prevTransform = el.style.transform;
+    const prevShadow = card.style.boxShadow;
     el.style.transform = "none";
+    card.style.boxShadow = "none"; // 사파리에서 그림자가 깨지는 문제 방지: 캡처 중엔 잠깐 제거
 
     try {
+      // 폰트가 완전히 로드될 때까지 대기 — 기기별로 폰트 대체(fallback)되는 문제 방지
+      await document.fonts.ready;
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       const dataUrl = await toPng(el, {
@@ -142,6 +148,7 @@ function Index() {
       alert("이미지 생성에 실패했어요. 다시 시도해 주세요.");
     } finally {
       el.style.transform = prevTransform;
+      card.style.boxShadow = prevShadow;
       setDownloading(false);
     }
   }
@@ -186,7 +193,7 @@ function Index() {
             }}
             className="flex items-center justify-center p-10 transition-colors"
           >
-            <div className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
+            <div ref={cardRef} className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
               <p
                 className="text-center text-[20px] font-extrabold tracking-tight"
                 style={{ color: titleColor }}
