@@ -121,12 +121,12 @@ function Index() {
     card.style.boxShadow = "none"; // 사파리에서 그림자가 깨지는 문제 방지: 캡처 중엔 잠깐 제거
 
     try {
-      // 폰트가 완전히 로드될 때까지 대기 — 기기별로 폰트 대체(fallback)되는 문제 방지
+      // 1. 따옴표를 포함한 정석 문법으로 폰트 로드
       await Promise.all([
-        document.fonts.load("400 16px Pretendard"),
-        document.fonts.load("500 16px Pretendard"),
-        document.fonts.load("700 16px Pretendard"),
-        document.fonts.load("800 16px Pretendard"),
+        document.fonts.load("400 16px 'Pretendard'"),
+        document.fonts.load("500 16px 'Pretendard'"),
+        document.fonts.load("700 16px 'Pretendard'"),
+        document.fonts.load("800 16px 'Pretendard'"),
       ]);
       await document.fonts.ready;
       await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -136,7 +136,8 @@ function Index() {
         height: FRAME_SIZE,
         pixelRatio: 3,
         cacheBust: true,
-        skipFonts: false,
+        // 2. 외부 CDN WOFF2 파일 재요청 시 발생하는 CORS/네트워크 에러 방지
+        fontEmbedCSS: "",
       });
 
       const blob = await (await fetch(dataUrl)).blob();
