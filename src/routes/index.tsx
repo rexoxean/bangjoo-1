@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
-import { Search, Shield, Code, Download, ImagePlus, X, Moon, Sun } from "lucide-react";
+import { Search, Shield, Code, Download, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,14 +23,12 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// 항상 이 픽셀 크기를 기준으로 렌더링 — 폰트/간격 비율이 기기와 무관하게 항상 동일하도록 고정
 const FRAME_SIZE = 640;
 
-// 부서별 CMYK 색상 (안전팀=C, 수색팀=M, 개발팀=Y)
 const DEPARTMENTS = [
-  { id: "safety", label: "안전팀", Icon: Shield, color: "#00AEEF" }, // Cyan
-  { id: "search", label: "수색팀", Icon: Search, color: "#EC008C" }, // Magenta
-  { id: "dev", label: "개발팀", Icon: Code, color: "#FFF200" }, // Yellow
+  { id: "safety", label: "안전팀", Icon: Shield, color: "#00AEEF" },
+  { id: "search", label: "수색팀", Icon: Search, color: "#EC008C" },
+  { id: "dev", label: "개발팀", Icon: Code, color: "#FFF200" },
 ] as const;
 
 const HEX_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
@@ -78,7 +76,6 @@ function Index() {
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const accentColor = current.color;
 
-  // 화면 폭에 맞춰 640px 고정 카드를 통째로 축소/확대 (비율 100% 유지)
   useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -117,10 +114,9 @@ function Index() {
     const prevTransform = el.style.transform;
     const prevShadow = card.style.boxShadow;
     el.style.transform = "none";
-    card.style.boxShadow = "none"; // Safari 등에서 box-shadow 레이어 캡처 불량 방지
+    card.style.boxShadow = "none";
 
     try {
-      // Pretendard 폰트 페이스 준비 완료 보장
       if ("fonts" in document) {
         await Promise.all([
           document.fonts.load("400 16px Pretendard", "글"),
@@ -131,7 +127,6 @@ function Index() {
         await document.fonts.ready;
       }
 
-      // DOM 프레임 완전히 그려질 때까지 2프레임 대기
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const dataUrl = await toPng(el, {
@@ -139,7 +134,7 @@ function Index() {
         height: FRAME_SIZE,
         pixelRatio: 3,
         cacheBust: true,
-        fontEmbedCSS: "", // 외부 CDN 재요청으로 인한 CORS 에러 방지
+        fontEmbedCSS: "",
       });
 
       const blob = await (await fetch(dataUrl)).blob();
@@ -187,9 +182,7 @@ function Index() {
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <h1 className="sr-only">방주 통행증 발급처</h1>
 
-        {/* 화면 폭에 맞춰 스케일되는 정사각형 뷰포트 */}
         <div ref={wrapperRef} className="mx-auto aspect-square w-full max-w-xl overflow-hidden">
-          {/* 항상 640x640 고정 픽셀로 렌더링되고, transform: scale()로만 화면에 맞춰 축소됨 */}
           <div
             ref={captureRef}
             style={{
@@ -203,38 +196,63 @@ function Index() {
             className="flex items-center justify-center p-10 transition-colors"
           >
             <div ref={cardRef} className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
+              {/* 상단 제목: scaleY(0.88)로 세로 비율 축소 */}
               <p
-                className="text-center text-[20px] font-extrabold tracking-tight"
-                style={{ color: titleColor }}
+                className="origin-center text-center text-[20px] font-extrabold tracking-tight"
+                style={{ color: titleColor, transform: "scaleY(0.88)" }}
               >
                 CERTIFICATE OF TRANSIT AUTHORIZATION
               </p>
 
               <div className="mt-6 grid grid-cols-[1.3fr_0.7fr] items-center gap-6">
-                <div className="text-right">
-                  <p className="text-[16px]" style={{ color: labelColor }}>
+                <div className="flex flex-col items-end text-right">
+                  {/* NAME 라벨: scaleY(0.85) */}
+                  <p
+                    className="origin-right text-[15px] font-semibold leading-none"
+                    style={{ color: labelColor, transform: "scaleY(0.85)" }}
+                  >
                     NAME
                   </p>
-                  <p
-                    className="inline-block border-b-2 pb-1 text-[21px] font-medium leading-tight"
-                    style={{ borderColor: nameColor, color: nameColor }}
-                  >
-                    {name || "\u00A0"}
-                  </p>
 
-                  <p className="mt-6 text-[16px]" style={{ color: labelColor }}>
+                  {/* 이름 텍스트: scaleY(0.88) 및 언더바 바짝 밀착 */}
+                  <div className="mt-1.5 flex justify-end">
+                    <span
+                      className="inline-block border-b-2 pb-[1px] text-[21px] font-medium leading-none"
+                      style={{
+                        borderColor: nameColor,
+                        color: nameColor,
+                        transform: "scaleY(0.88)",
+                        transformOrigin: "bottom right",
+                      }}
+                    >
+                      {name || "\u00A0"}
+                    </span>
+                  </div>
+
+                  {/* DEPARTMENT 라벨: scaleY(0.85) */}
+                  <p
+                    className="mt-5 origin-right text-[15px] font-semibold leading-none"
+                    style={{ color: labelColor, transform: "scaleY(0.85)" }}
+                  >
                     DEPARTMENT
                   </p>
+
+                  {/* 부서 이름: scaleY(0.88) */}
                   <div
-                    className="flex items-center justify-end font-extrabold"
+                    className="mt-1 flex items-center justify-end font-extrabold leading-none"
                     style={{ color: accentColor }}
                   >
-                    <span className="text-[21px]">{current.label}</span>
+                    <span
+                      className="inline-block origin-right text-[21px]"
+                      style={{ transform: "scaleY(0.88)" }}
+                    >
+                      {current.label}
+                    </span>
                   </div>
                 </div>
 
                 <div
-                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
+                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded-md"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
@@ -243,7 +261,11 @@ function Index() {
                 </div>
               </div>
 
-              <p className="mt-6 text-center text-[16px] font-bold" style={{ color: titleColor }}>
+              {/* 하단 문구: scaleY(0.9) */}
+              <p
+                className="mt-6 origin-center text-center text-[15px] font-bold"
+                style={{ color: titleColor, transform: "scaleY(0.9)" }}
+              >
                 상기 인의 방주 통행 및 신원을 보증함.
               </p>
             </div>
