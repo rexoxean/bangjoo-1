@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
 import { Search, Shield, Code, Download, ImagePlus, X } from "lucide-react";
 
@@ -31,6 +31,18 @@ const DEPARTMENTS = [
   { id: "dev", label: "개발팀", Icon: Code, color: "#FFF200" }, // Yellow
 ] as const;
 
+const HEX_RE = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+
+function normalizeHex(raw: string): string | null {
+  let v = raw.trim();
+  if (!v.startsWith("#")) v = `#${v}`;
+  if (!HEX_RE.test(v)) return null;
+  if (v.length === 4) {
+    v = `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`;
+  }
+  return v;
+}
+
 function readImageFile(file: File): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -44,7 +56,12 @@ function Index() {
   const [name, setName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
-  const [textColor, setTextColor] = useState("#111111");
+
+  // 글자 색: 제목/하단 문구, 라벨(NAME/DEPARTMENT), 이름 값 — 3그룹으로 분리
+  const [titleColor, setTitleColor] = useState("#111111");
+  const [labelColor, setLabelColor] = useState("#6b7280");
+  const [nameColor, setNameColor] = useState("#111111");
+
   const [cardColor, setCardColor] = useState("#ffffff");
   const [cardImage, setCardImage] = useState<string | null>(null);
   const [rectColor, setRectColor] = useState("#8f8f8f");
@@ -53,7 +70,6 @@ function Index() {
   const [downloading, setDownloading] = useState(false);
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
-  const DeptIcon = current.Icon;
   const accentColor = current.color;
 
   async function onPhoto(e: ChangeEvent<HTMLInputElement>) {
@@ -77,24 +93,22 @@ function Index() {
   async function download() {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
+    // 팝업 차단을 피하려면 클릭 직후(비동기 작업 전에) 창을 먼저 열어야 함
+    const win = window.open("", "_blank");
     try {
       const dataUrl = await toPng(captureRef.current, {
         pixelRatio: 3,
         cacheBust: true,
-        skipFonts: true,
+        skipFonts: false,
       });
 
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], "transit-certificate.png", { type: "image/png" });
-
-      const nav = navigator as Navigator & {
-        canShare?: (data?: ShareData) => boolean;
-        share?: (data: ShareData) => Promise<void>;
-      };
-
-      if (nav.canShare && nav.share && nav.canShare({ files: [file] })) {
-        await nav.share({ files: [file], title: "방주 통행증" });
+      if (win) {
+        win.document.write(
+          `<title>방주 통행증</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" style="max-width:100%;height:auto;" alt="방주 통행증" /></body>`,
+        );
+        win.document.close();
       } else {
+        // 팝업이 차단된 경우 기존 방식(자동 다운로드)으로 대체
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = "transit-certificate.png";
@@ -103,9 +117,9 @@ function Index() {
         a.remove();
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      console.error("이미지 다운로드 실패:", err);
-      alert("이미지 다운로드에 실패했어요. 다시 시도해 주세요.");
+      console.error("이미지 생성 실패:", err);
+      win?.close();
+      alert("이미지 생성에 실패했어요. 다시 시도해 주세요.");
     } finally {
       setDownloading(false);
     }
@@ -116,10 +130,14 @@ function Index() {
         backgroundImage: `url(${cardImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        color: textColor,
+        color: titleColor,
         containerType: "inline-size" as const,
       }
-    : { backgroundColor: cardColor, color: textColor, containerType: "inline-size" as const };
+    : {
+        backgroundColor: cardColor,
+        color: titleColor,
+        containerType: "inline-size" as const,
+      };
 
   const rectStyle = rectImage
     ? {
@@ -129,8 +147,14 @@ function Index() {
       }
     : { backgroundColor: rectColor };
 
+  // 카드 안쪽 여백과 세로 간격을 동일한 값으로 통일 (테두리~제목, 제목~내용, 내용~사진 간격 일치)
+  const SPACING = "clamp(10px,4cqw,32px)";
+
   return (
-    <main className="min-h-screen bg-muted px-4 py-8">
+    <main
+      className="min-h-screen bg-muted px-4 py-8"
+      style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}
+    >
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <h1 className="sr-only">방주 통행 증명서 메이커</h1>
 
@@ -138,35 +162,46 @@ function Index() {
         <div
           ref={captureRef}
           className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
-          style={rectStyle}
+          style={{ ...rectStyle, letterSpacing: "-0.02em" }}
         >
-          {/* 카드: 비율 고정(2.2:1) + overflow-hidden으로 액자 안에서 비율 유지, 폭은 액자의 85%만 사용해 좌우 여백 확보 */}
           <div
-            className="aspect-[3/2] w-[90%] overflow-hidden p-[clamp(10px,4cqw,32px)] shadow-2xl"
+            className="aspect-[3/2] w-[90%] overflow-hidden rounded-lg p-[clamp(10px,4cqw,32px)] shadow-2xl"
             style={cardStyle}
           >
-            <p className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]">
+            <p
+              className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]"
+              style={{ color: titleColor }}
+            >
               CERTIFICATE OF TRANSIT AUTHORIZATION
             </p>
 
-            <div className="mt-[2cqw] grid grid-cols-[1.3fr_0.7fr] items-center gap-[3cqw]">
+            <div
+              className="grid grid-cols-[1.3fr_0.7fr] items-center"
+              style={{ marginTop: SPACING, gap: SPACING }}
+            >
               <div className="text-right">
-                <p className="text-[clamp(9px,2.1cqw,17px)]">NAME</p>
-                  <p
-                    className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(11px,3cqw,23px)]"
-                    style={{ borderColor: textColor }}
-                  >
-                    {name || "\u00A0"}
-                  </p>
-                  
-                  <p className="mt-[2cqw] text-[clamp(9px,2.1cqw,17px)]">DEPARTMENT</p>
-                  <div
-                    className="flex items-center justify-end gap-[1cqw] font-extrabold"
-                    style={{ color: accentColor }}
-                  >
-                    <DeptIcon className="size-[clamp(14px,3.6cqw,30px)]" strokeWidth={2.5} />
-                    <span className="text-[clamp(12px,3cqw,23px)]">{current.label}</span>
-                  </div>
+                <p className="text-[clamp(9px,2.1cqw,17px)]" style={{ color: labelColor }}>
+                  NAME
+                </p>
+                <p
+                  className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(11px,3cqw,23px)]"
+                  style={{ borderColor: nameColor, color: nameColor }}
+                >
+                  {name || "\u00A0"}
+                </p>
+
+                <p
+                  className="text-[clamp(9px,2.1cqw,17px)]"
+                  style={{ color: labelColor, marginTop: SPACING }}
+                >
+                  DEPARTMENT
+                </p>
+                <div
+                  className="flex items-center justify-end font-extrabold"
+                  style={{ color: accentColor }}
+                >
+                  <span className="text-[clamp(12px,3cqw,23px)]">{current.label}</span>
+                </div>
               </div>
 
               <div
@@ -177,7 +212,10 @@ function Index() {
               </div>
             </div>
 
-            <p className="mt-[2cqw] text-center font-bold text-[clamp(10px,2.3cqw,18px)]">
+            <p
+              className="text-center font-bold text-[clamp(10px,2.3cqw,18px)]"
+              style={{ color: titleColor, marginTop: SPACING }}
+            >
               상기인의 방주 통행 및 신원을 보증함.
             </p>
           </div>
@@ -201,7 +239,7 @@ function Index() {
               사진 넣기
               <input type="file" accept="image/*" className="hidden" onChange={onPhoto} />
             </label>
-            <ColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
+            <HexColorField label="사진 배경" value={photoBg} onChange={setPhotoBg} />
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2">
@@ -222,7 +260,16 @@ function Index() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <ColorField label="글씨 색" value={textColor} onChange={setTextColor} />
+            <HexColorField label="제목·하단 문구 색" value={titleColor} onChange={setTitleColor} />
+            <HexColorField
+              label="라벨 색 (NAME/DEPT)"
+              value={labelColor}
+              onChange={setLabelColor}
+            />
+            <HexColorField label="이름 글자 색" value={nameColor} onChange={setNameColor} />
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <ImageOrColorField
               label="카드 배경"
               color={cardColor}
@@ -255,7 +302,8 @@ function Index() {
   );
 }
 
-function ColorField({
+/** 색상 피커 + 헥스코드 입력 (OS/브라우저 상관없이 정확한 색상 지정 가능) */
+function HexColorField({
   label,
   value,
   onChange,
@@ -264,15 +312,44 @@ function ColorField({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const [text, setText] = useState(value);
+
+  useEffect(() => {
+    setText(value);
+  }, [value]);
+
+  function commit(raw: string) {
+    const normalized = normalizeHex(raw);
+    if (normalized) {
+      onChange(normalized);
+    } else {
+      setText(value);
+    }
+  }
+
   return (
     <label className="flex flex-col gap-1 text-xs font-medium">
       {label}
-      <input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full cursor-pointer rounded-lg border border-border bg-background"
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-border bg-background"
+          aria-label={`${label} 색상 선택`}
+        />
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          placeholder="#000000"
+          className="h-10 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
     </label>
   );
 }
@@ -292,6 +369,21 @@ function ImageOrColorField({
   onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onClearImage: () => void;
 }) {
+  const [text, setText] = useState(color);
+
+  useEffect(() => {
+    setText(color);
+  }, [color]);
+
+  function commit(raw: string) {
+    const normalized = normalizeHex(raw);
+    if (normalized) {
+      onColorChange(normalized);
+    } else {
+      setText(color);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-1 text-xs font-medium">
       <span>{label}</span>
@@ -300,9 +392,20 @@ function ImageOrColorField({
           type="color"
           value={color}
           onChange={(e) => onColorChange(e.target.value)}
-          className="h-10 flex-1 cursor-pointer rounded-lg border border-border bg-background"
+          className="h-10 w-10 shrink-0 cursor-pointer rounded-lg border border-border bg-background"
         />
-        <label className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-border bg-background hover:bg-accent">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          placeholder="#000000"
+          className="h-10 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+        />
+        <label className="relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background hover:bg-accent">
           {image ? (
             <img src={image} alt="" className="size-full rounded-lg object-cover" />
           ) : (
@@ -314,7 +417,7 @@ function ImageOrColorField({
           <button
             type="button"
             onClick={onClearImage}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background hover:bg-accent"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background hover:bg-accent"
             aria-label="이미지 제거"
           >
             <X className="size-4 opacity-60" />
