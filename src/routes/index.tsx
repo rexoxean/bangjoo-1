@@ -122,6 +122,12 @@ function Index() {
 
     try {
       // 폰트가 완전히 로드될 때까지 대기 — 기기별로 폰트 대체(fallback)되는 문제 방지
+      await Promise.all([
+        document.fonts.load("400 16px Pretendard"),
+        document.fonts.load("500 16px Pretendard"),
+        document.fonts.load("700 16px Pretendard"),
+        document.fonts.load("800 16px Pretendard"),
+      ]);
       await document.fonts.ready;
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
