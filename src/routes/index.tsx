@@ -254,7 +254,7 @@ function Index() {
 
                 {/* 사진 영역 (가로 38% - 필요시 40%, 42% 등으로 자유롭게 변경 가능) */}
                 <div
-                  className="flex aspect-[4/5] w-[38%] items-center justify-center overflow-hidden"
+                  className="flex aspect-[4/5] w-[45%] items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
