@@ -254,7 +254,7 @@ function Index() {
 
                 {/* 사진 영역 (세로 h-[180px] 고정, 가로 w-[240px]로 확장) */}
                 <div
-                  className="flex h-[180px] w-[240px] shrink-0 items-center justify-center overflow-hidden"
+                  className="flex h-[180px] w-[160px] shrink-0 items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
