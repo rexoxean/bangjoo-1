@@ -186,10 +186,7 @@ function Index() {
             }}
             className="flex items-center justify-center p-10 transition-colors"
           >
-            <div
-              className="w-[90%] overflow-hidden rounded-lg p-8 shadow-2xl"
-              style={{ aspectRatio: "3 / 2", ...cardStyle }}
-            >
+            <div className="w-[90%] rounded-lg p-8 shadow-2xl" style={cardStyle}>
               <p
                 className="text-center text-[22px] font-extrabold tracking-tight"
                 style={{ color: titleColor }}
