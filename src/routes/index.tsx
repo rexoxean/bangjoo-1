@@ -1,21 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { toPng } from "html-to-image";
 import { Search, Shield, Code, Download, ImagePlus, X, Moon, Sun } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "방주 통행증 메이커 | 이름·사진·색상 커스텀 카드" },
+      { title: "방주 통행증 발급처" },
       {
         name: "description",
-        content:
-          "사진과 이름을 넣고 글씨색·카드색·배경색을 바꿔 나만의 통행 증명서를 만들고 이미지로 저장하세요.",
+        content: "통행 증명서를 통하여 나의 신원을 보증하세요.",
       },
       { property: "og:title", content: "방주 통행증 메이커" },
       {
         property: "og:description",
-        content: "사진, 이름, 색상을 커스텀해 통행 증명서를 만들고 갤러리에 저장하세요.",
+        content: "통행 증명서를 통하여 나의 신원을 보증하세요.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -23,6 +22,9 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
+
+// 항상 이 픽셀 크기를 기준으로 렌더링 — 폰트/간격 비율이 기기와 무관하게 항상 동일하도록 고정
+const FRAME_SIZE = 640;
 
 // 부서별 CMYK 색상 (안전팀=C, 수색팀=M, 개발팀=Y)
 const DEPARTMENTS = [
@@ -52,7 +54,10 @@ function readImageFile(file: File): Promise<string> {
 }
 
 function Index() {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
   const [name, setName] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [dept, setDept] = useState<(typeof DEPARTMENTS)[number]["id"]>("search");
@@ -67,12 +72,22 @@ function Index() {
   const [rectImage, setRectImage] = useState<string | null>(null);
   const [photoBg, setPhotoBg] = useState("#4b5563");
   const [downloading, setDownloading] = useState(false);
-
-  // 사이트 전체(편집 도구 화면) 다크/아포칼립스 테마 — 카드 자체 색상과는 별개
   const [dark, setDark] = useState(false);
 
   const current = DEPARTMENTS.find((d) => d.id === dept)!;
   const accentColor = current.color;
+
+  // 화면 폭에 맞춰 640px 고정 카드를 통째로 축소/확대 (비율 100% 유지)
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setScale(w / FRAME_SIZE);
+    });
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
 
   async function onPhoto(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -93,10 +108,20 @@ function Index() {
   }
 
   async function download() {
-    if (!captureRef.current || downloading) return;
+    const el = captureRef.current;
+    if (!el || downloading) return;
     setDownloading(true);
+
+    // 캡처 순간에는 화면 크기와 무관하게 축소(scale) 없이 원본 640px 그대로 캡처
+    const prevTransform = el.style.transform;
+    el.style.transform = "none";
+
     try {
-      const dataUrl = await toPng(captureRef.current, {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const dataUrl = await toPng(el, {
+        width: FRAME_SIZE,
+        height: FRAME_SIZE,
         pixelRatio: 3,
         cacheBust: true,
         skipFonts: false,
@@ -116,6 +141,7 @@ function Index() {
       console.error("이미지 생성 실패:", err);
       alert("이미지 생성에 실패했어요. 다시 시도해 주세요.");
     } finally {
+      el.style.transform = prevTransform;
       setDownloading(false);
     }
   }
@@ -126,13 +152,8 @@ function Index() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: titleColor,
-        containerType: "inline-size" as const,
       }
-    : {
-        backgroundColor: cardColor,
-        color: titleColor,
-        containerType: "inline-size" as const,
-      };
+    : { backgroundColor: cardColor, color: titleColor };
 
   const rectStyle = rectImage
     ? {
@@ -142,75 +163,77 @@ function Index() {
       }
     : { backgroundColor: rectColor };
 
-  const SPACING = "clamp(10px,4cqw,32px)";
-
   return (
     <main
       className={dark ? "min-h-screen bg-[#0b0b0c] px-4 py-8" : "min-h-screen bg-muted px-4 py-8"}
       style={{ fontFamily: "Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <h1 className="sr-only">방주 통행 증명서 메이커</h1>
+        <h1 className="sr-only">방주 통행증 발급처</h1>
 
-        <div
-          ref={captureRef}
-          className="mx-auto flex aspect-square w-full max-w-xl items-center justify-center p-6 transition-colors sm:p-10"
-          style={{ ...rectStyle, letterSpacing: "-0.02em" }}
-        >
+        {/* 화면 폭에 맞춰 스케일되는 정사각형 뷰포트 */}
+        <div ref={wrapperRef} className="mx-auto aspect-square w-full max-w-xl overflow-hidden">
+          {/* 항상 640x640 고정 픽셀로 렌더링되고, transform: scale()로만 화면에 맞춰 축소됨 */}
           <div
-            className="aspect-[3/2] w-[90%] overflow-hidden rounded-lg p-[clamp(10px,4cqw,32px)] shadow-2xl"
-            style={cardStyle}
+            ref={captureRef}
+            style={{
+              width: FRAME_SIZE,
+              height: FRAME_SIZE,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+              letterSpacing: "-0.02em",
+              ...rectStyle,
+            }}
+            className="flex items-center justify-center p-10 transition-colors"
           >
-            <p
-              className="text-center font-extrabold tracking-tight text-[clamp(10px,3cqw,22px)]"
-              style={{ color: titleColor }}
-            >
-              CERTIFICATE OF TRANSIT AUTHORIZATION
-            </p>
-
             <div
-              className="grid grid-cols-[1.3fr_0.7fr] items-center"
-              style={{ marginTop: SPACING, gap: SPACING }}
+              className="w-[90%] overflow-hidden rounded-lg p-8 shadow-2xl"
+              style={{ aspectRatio: "3 / 2", ...cardStyle }}
             >
-              <div className="text-right">
-                <p className="text-[clamp(9px,2.1cqw,17px)]" style={{ color: labelColor }}>
-                  NAME
-                </p>
-                <p
-                  className="inline-block border-b-2 pb-1 font-medium leading-tight text-[clamp(11px,3cqw,23px)]"
-                  style={{ borderColor: nameColor, color: nameColor }}
-                >
-                  {name || "\u00A0"}
-                </p>
+              <p
+                className="text-center text-[22px] font-extrabold tracking-tight"
+                style={{ color: titleColor }}
+              >
+                CERTIFICATE OF TRANSIT AUTHORIZATION
+              </p>
 
-                <p
-                  className="text-[clamp(9px,2.1cqw,17px)]"
-                  style={{ color: labelColor, marginTop: SPACING }}
-                >
-                  DEPARTMENT
-                </p>
+              <div className="mt-8 grid grid-cols-[1.3fr_0.7fr] items-center gap-8">
+                <div className="text-right">
+                  <p className="text-[17px]" style={{ color: labelColor }}>
+                    NAME
+                  </p>
+                  <p
+                    className="inline-block border-b-2 pb-1 text-[23px] font-medium leading-tight"
+                    style={{ borderColor: nameColor, color: nameColor }}
+                  >
+                    {name || "\u00A0"}
+                  </p>
+
+                  <p className="mt-8 text-[17px]" style={{ color: labelColor }}>
+                    DEPARTMENT
+                  </p>
+                  <div
+                    className="flex items-center justify-end font-extrabold"
+                    style={{ color: accentColor }}
+                  >
+                    <span className="text-[23px]">{current.label}</span>
+                  </div>
+                </div>
+
                 <div
-                  className="flex items-center justify-end font-extrabold"
-                  style={{ color: accentColor }}
+                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
+                  style={{ backgroundColor: photoBg }}
                 >
-                  <span className="text-[clamp(12px,3cqw,23px)]">{current.label}</span>
+                  {photo && (
+                    <img src={photo} alt="통행증 사진" className="size-full object-cover" />
+                  )}
                 </div>
               </div>
 
-              <div
-                className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
-                style={{ backgroundColor: photoBg }}
-              >
-                {photo && <img src={photo} alt="통행증 사진" className="size-full object-cover" />}
-              </div>
+              <p className="mt-8 text-center text-[18px] font-bold" style={{ color: titleColor }}>
+                상기 인의 방주 통행 및 신원을 보증함.
+              </p>
             </div>
-
-            <p
-              className="text-center font-bold text-[clamp(10px,2.3cqw,18px)]"
-              style={{ color: titleColor, marginTop: SPACING }}
-            >
-              상기인의 방주 통행 및 신원을 보증함.
-            </p>
           </div>
         </div>
 
@@ -307,7 +330,6 @@ function Index() {
   );
 }
 
-/** 이름 텍스트 입력 + 색상 피커 + 헥스코드 입력 */
 function NameFieldWithHex({
   value,
   onChange,
@@ -364,7 +386,6 @@ function NameFieldWithHex({
   );
 }
 
-/** 색상 피커 + 헥스코드 입력 */
 function HexColorField({
   label,
   value,
