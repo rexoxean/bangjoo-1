@@ -204,7 +204,7 @@ function Index() {
                 CERTIFICATE OF TRANSIT AUTHORIZATION
               </p>
 
-              <div className="mt-6 grid grid-cols-[1.2fr_0.8fr] items-center gap-6">
+              <div className="mt-6 grid grid-cols-[1.3fr_0.7fr] items-center gap-6">
                 <div className="flex flex-col items-end text-right">
                   {/* NAME 라벨: scaleY(0.85) */}
                   <p
@@ -252,7 +252,7 @@ function Index() {
                 </div>
 
                 <div
-                  className="flex aspect-[3/4] w-full items-center justify-center overflow-hidden"
+                  className="flex aspect-[4/5] w-full items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
                 >
                   {photo && (
