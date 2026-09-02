@@ -261,6 +261,17 @@ function Index() {
                     <img src={photo} alt="통행증 사진" className="size-full object-cover" />
                   )}
                 </div>
+
+                <img
+                  src="/stamp.png"
+                  alt="운영본부 직인"
+                  className="pointer-events-none absolute w-[78px] select-none"
+                  style={{
+                    left: "61%",
+                    top: "95%",
+                    transform: "translate(-50%, -50%) rotate(-16deg)",
+                  }}
+                />
               </div>
 
               {/* 하단 문구: scaleY(0.9) */}
