@@ -266,7 +266,7 @@ function Index() {
 
               {/* 하단 문구 */}
               <p
-                className="mt-6 origin-center text-center text-[18px] font-bold"
+                className="relative z-10 mt-6 origin-center text-center text-[18px] font-bold"
                 style={{ color: titleColor, transform: "scaleY(0.9)" }}
               >
                 상기 인의 방주 통행 및 신원을 보증함.
@@ -276,7 +276,7 @@ function Index() {
               <img
                 src="/stamp.png"
                 alt="운영본부 직인"
-                className="pointer-events-none absolute w-[78px] select-none"
+                className="pointer-events-none absolute z-0 w-[78px] select-none"
                 style={{
                   right: "75px",
                   bottom: "20px",
