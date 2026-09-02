@@ -195,8 +195,9 @@ function Index() {
             }}
             className="flex items-center justify-center p-10 transition-colors"
           >
-            <div ref={cardRef} className="w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
-              {/* 상단 제목: scaleY(0.88)로 세로 비율 축소 */}
+            {/* relative 속성을 명시하여 직인 이미지의 기준점으로 지정 */}
+            <div ref={cardRef} className="relative w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
+              {/* 상단 제목 */}
               <p
                 className="origin-center text-center text-[22px] font-extrabold tracking-tight"
                 style={{ color: titleColor, transform: "scaleY(0.88)" }}
@@ -207,7 +208,7 @@ function Index() {
               <div className="mt-6 flex items-center justify-between gap-6">
                 {/* 텍스트 영역 */}
                 <div className="flex flex-1 flex-col items-end text-right">
-                  {/* NAME 라벨: scaleY(0.85) */}
+                  {/* NAME 라벨 */}
                   <p
                     className="origin-right text-[16px] font-semibold leading-none"
                     style={{ color: labelColor, transform: "scaleY(0.85)" }}
@@ -215,7 +216,7 @@ function Index() {
                     NAME
                   </p>
 
-                  {/* 이름 텍스트: scaleY(0.88) 및 언더바 바짝 밀착 */}
+                  {/* 이름 텍스트 */}
                   <div className="mt-1.5 flex justify-end">
                     <span
                       className="inline-block border-b-2 pb-[1px] text-[22px] font-extrabold leading-none"
@@ -230,7 +231,7 @@ function Index() {
                     </span>
                   </div>
 
-                  {/* DEPARTMENT 라벨: scaleY(0.85) */}
+                  {/* DEPARTMENT 라벨 */}
                   <p
                     className="mt-5 origin-right text-[16px] font-semibold leading-none"
                     style={{ color: labelColor, transform: "scaleY(0.85)" }}
@@ -238,7 +239,7 @@ function Index() {
                     DEPARTMENT
                   </p>
 
-                  {/* 부서 이름: scaleY(0.88) */}
+                  {/* 부서 이름 */}
                   <div
                     className="mt-1 flex items-center justify-end font-extrabold leading-none"
                     style={{ color: accentColor }}
@@ -252,7 +253,7 @@ function Index() {
                   </div>
                 </div>
 
-                {/* 사진 영역 (세로 h-[180px] 고정, 가로 w-[240px]로 확장) */}
+                {/* 사진 영역 */}
                 <div
                   className="flex h-[180px] w-[160px] shrink-0 items-center justify-center overflow-hidden"
                   style={{ backgroundColor: photoBg }}
@@ -261,26 +262,27 @@ function Index() {
                     <img src={photo} alt="통행증 사진" className="size-full object-cover" />
                   )}
                 </div>
-
-                <img
-                  src="/stamp.png"
-                  alt="운영본부 직인"
-                  className="pointer-events-none absolute w-[78px] select-none"
-                  style={{
-                    left: "74%",
-                    top: "67%",
-                    transform:"translate(-50%, -50%) rotate(16deg)",
-                  }}
-                />
               </div>
 
-              {/* 하단 문구: scaleY(0.9) */}
+              {/* 하단 문구 */}
               <p
                 className="mt-6 origin-center text-center text-[18px] font-bold"
                 style={{ color: titleColor, transform: "scaleY(0.9)" }}
               >
                 상기 인의 방주 통행 및 신원을 보증함.
               </p>
+
+              {/* 직인 이미지: 카드 우측 하단을 픽셀 기준(px)으로 고정 */}
+              <img
+                src="/stamp.png"
+                alt="운영본부 직인"
+                className="pointer-events-none absolute w-[78px] select-none"
+                style={{
+                  right: "24px",
+                  bottom: "48px",
+                  transform: "rotate(16deg)",
+                }}
+              />
             </div>
           </div>
         </div>
