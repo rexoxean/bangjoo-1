@@ -278,8 +278,8 @@ function Index() {
                 alt="운영본부 직인"
                 className="pointer-events-none absolute w-[78px] select-none"
                 style={{
-                  right: "24px",
-                  bottom: "48px",
+                  right: "75px",
+                  bottom: "20px",
                   transform: "rotate(16deg)",
                 }}
               />
