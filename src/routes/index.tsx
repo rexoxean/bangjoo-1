@@ -297,7 +297,7 @@ function Index() {
 
               {/* 하단 문구 */}
               <p
-                className="relative mt-6 origin-center text-center text-[18px] font-bold"
+                className="relative z-20 mt-6 origin-center text-center text-[18px] font-bold"
                 style={{ color: titleColor, transform: "scaleY(0.9)" }}
               >
                 상기 인의 방주 통행 및 신원을 보증함.
