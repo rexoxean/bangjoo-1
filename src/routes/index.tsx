@@ -51,6 +51,21 @@ function readImageFile(file: File): Promise<string> {
   });
 }
 
+// captureRef 내부의 모든 <img>가 완전히 로드될 때까지 기다린다.
+// (사진/도장 이미지가 아직 그려지기 전에 캡처되어 빈 카드로 저장되는 문제 방지)
+function waitForImages(container: HTMLElement): Promise<void> {
+  const imgs = Array.from(container.querySelectorAll("img"));
+  return Promise.all(
+    imgs.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.addEventListener("load", () => resolve(), { once: true });
+        img.addEventListener("error", () => resolve(), { once: true });
+      });
+    })
+  ).then(() => undefined);
+}
+
 function Index() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
@@ -127,6 +142,9 @@ function Index() {
         await document.fonts.ready;
       }
 
+      // 사진 / 도장 등 모든 이미지가 실제로 로드된 뒤에 캡처한다.
+      await waitForImages(el);
+
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       const dataUrl = await toPng(el, {
@@ -195,7 +213,6 @@ function Index() {
             }}
             className="flex items-center justify-center p-10 transition-colors"
           >
-            {/* relative 속성을 명시하여 직인 이미지의 기준점으로 지정 */}
             <div ref={cardRef} className="relative w-[95%] rounded-2xl p-6 shadow-2xl" style={cardStyle}>
               {/* 상단 제목 */}
               <p
@@ -253,36 +270,38 @@ function Index() {
                   </div>
                 </div>
 
-                {/* 사진 영역 */}
-                <div
-                  className="flex h-[180px] w-[160px] shrink-0 items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: photoBg }}
-                >
-                  {photo && (
-                    <img src={photo} alt="통행증 사진" className="size-full object-cover" />
-                  )}
+                {/* 사진 영역 (relative 래퍼: 도장을 이 박스 기준으로 겹쳐 배치) */}
+                <div className="relative h-[180px] w-[160px] shrink-0">
+                  <div
+                    className="flex size-full items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: photoBg }}
+                  >
+                    {photo && (
+                      <img src={photo} alt="통행증 사진" className="size-full object-cover" />
+                    )}
+                  </div>
+
+                  {/* 방주 운영본부 직인: 사진 박스 우하단 모서리에 겹치도록 배치 */}
+                  <img
+                    src="/stamp.png"
+                    alt="운영본부 직인"
+                    className="pointer-events-none absolute z-10 w-[78px] select-none"
+                    style={{
+                      left: "61%",
+                      top: "95%",
+                      transform: "translate(-50%, -50%) rotate(-16deg)",
+                    }}
+                  />
                 </div>
               </div>
 
               {/* 하단 문구 */}
               <p
-                className="relative z-10 mt-6 origin-center text-center text-[18px] font-bold"
+                className="relative mt-6 origin-center text-center text-[18px] font-bold"
                 style={{ color: titleColor, transform: "scaleY(0.9)" }}
               >
                 상기 인의 방주 통행 및 신원을 보증함.
               </p>
-
-              {/* 직인 이미지: 카드 우측 하단을 픽셀 기준(px)으로 고정 */}
-              <img
-                src="/stamp.png"
-                alt="운영본부 직인"
-                className="pointer-events-none absolute z-0 w-[78px] select-none"
-                style={{
-                  right: "75px",
-                  bottom: "20px",
-                  transform: "rotate(16deg)",
-                }}
-              />
             </div>
           </div>
         </div>
